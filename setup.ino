@@ -7,13 +7,13 @@ void InterruptDebitAir();
 
 void setup()
 {
-  // Setup_Start
+  // ******* Setup_Start ******* 
   setupSerial();
-  // setupSim() // [SALMAN] cek ini
-  setupRTC();
-  // setupFlowSensor(); // initializes flow sensor through pin connections
-  setupSDCard(); // [SALMAN] cek ini
-  // Setup_End
+  // setupSim(); // [SALMAN] cek ini
+  // setupRTC(); // abaikan aja ini
+  // setupFlowSensor(); // abaikan aja ini
+  // setupSDCard(); // [SALMAN] cek ini
+  // ******* Setup_End *******
   
   Serial.println("Setup: Initialization done.");
   EspSerial.println("Setup: Initialization done.");
@@ -25,8 +25,8 @@ void setupSerial() {
   EspSerial.begin(9600);
 
   while (!Serial);
-  Serial.println("Setup: Initialize...");
-  EspSerial.println("Setup: Initialize...");
+  Serial.println("Setup: Initialize Serial...");
+  EspSerial.println("Setup: Initialize Serial...");
 }
 
 // Setup SIM
@@ -121,29 +121,6 @@ void setupFlowSensor()
   attachInterrupt(0,InterruptDebitAir,RISING); // di pin 2
   sei();
 
-  xTaskCreate(DebitTask, "DebitTask", 128, NULL, 2, NULL);
-}
-
-void InterruptDebitAir()
-{
-  frekuensi_aliran++;
-}
-
-void HitungDebitAir()
-{
-    DebitAir = (frekuensi_aliran/7.5)*K/60.0/WaktuDebitAir; //L/s
-    frekuensi_aliran = 0;
-    Serial.print("Debit Air: ");
-    Serial.println(DebitAir);
-}
-
-void DebitTask(void *param) {
-    (void) param;
-    Serial.println("debitTask: Executing on core ");
-    
-     for(;;) {
-         HitungDebitAir();
-         vTaskDelay(1000 / portTICK_PERIOD_MS); // Delay between loops to reset watchdog timer portMAX_DELAY
-     }
-    vTaskDelete(NULL);
+  // xTaskCreate(DebitTask, "DebitTask", 128, NULL, 2, NULL);
+  // xTaskCreate(BlinkTask, "BlinkTask", 128, NULL, 1, NULL);
 }

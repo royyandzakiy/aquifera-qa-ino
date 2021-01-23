@@ -26,8 +26,8 @@ String  number = dest_phone_no;
 #define FLOWSENSOR_PIN 2
 const long WaktuDebitAir = 5; //pengambilan data setiap 5 detik
 int K = 2.6; // Konstanta flow sensor
-float DebitAir;
-volatile long frekuensi_aliran;
+float DebitAir = 0.0;
+volatile long frekuensi_aliran = 0;
 
 //RTC
 struct ts t;
