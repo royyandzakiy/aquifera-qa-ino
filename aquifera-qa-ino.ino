@@ -44,15 +44,9 @@ void resetEeprom();
 void setupRTC();
 void setTimeRTC();
 void setupSDCard();
-void InterruptDebitAir();
+void interruptFlowSensor();
 
-AlarmId id;
-
-void DebitLoop() {
-     // HitungDebitAir();
-     Serial.print("frekuensi_aliran: ");
-     Serial.println(frekuensi_aliran);
-}
+//AlarmId id;
 
 void setup()
 {
@@ -60,12 +54,13 @@ void setup()
   setupSerial();
   // setupSim(); // [SALMAN] cek ini
   // setupRTC(); // abaikan aja ini
-  // setupFlowSensor(); // abaikan aja ini
+  setupFlowSensor(); // abaikan aja ini
   // setupSDCard(); // [SALMAN] cek ini
   // ******* Setup_End *******
 
   setTime(22,15,30,23,1,21);
-  Alarm.timerRepeat(15, DebitLoop);
+  Alarm.timerRepeat(5, updateDebitCount);
+  Alarm.timerRepeat(15, reportDebitCount);
   
   Serial.println("Setup: Initialization done.");
   EspSerial.println("Setup: Initialization done.");
@@ -73,13 +68,30 @@ void setup()
 
 void loop() 
 {
-//  echo();
-//  echoEsp();
-   digitalClockDisplay();
-   Alarm.delay(1000); // wait one second between clock display
+  echo();
+  echoEsp();
+//   digitalClockDisplay();
+   Alarm.delay(0); // wait one second between clock display
 }
 
 // ------
+
+void echo() {
+  if(Serial.available()) {
+    String str = Serial.readStringUntil('\n');
+    Serial.println(str);
+    EspSerial.println(str);
+    delay(10);
+  }
+}
+
+void echoEsp() {
+  if(EspSerial.available()) {
+    String str = EspSerial.readStringUntil('\n');
+    Serial.println(str);
+    delay(10);
+  }
+}
 
 // Setup Serial
 void setupSerial() {
@@ -91,20 +103,20 @@ void setupSerial() {
   EspSerial.println("Setup: Initialize Serial...");
 }
 
-void digitalClockDisplay() {
-  // digital clock display of the time
-  Serial.print(hour());
-  printDigits(minute());
-  printDigits(second());
-  Serial.println();
-}
-
-void printDigits(int digits) {
-  Serial.print(":");
-  if (digits < 10)
-    Serial.print('0');
-  Serial.print(digits);
-}
+//void digitalClockDisplay() {
+//  // digital clock display of the time
+//  Serial.print(hour());
+//  printDigits(minute());
+//  printDigits(second());
+//  Serial.println();
+//}
+//
+//void printDigits(int digits) {
+//  Serial.print(":");
+//  if (digits < 10)
+//    Serial.print('0');
+//  Serial.print(digits);
+//}
 
 // Setup SIM
 //void setupSim() {
@@ -195,9 +207,73 @@ void setupFlowSensor()
  
   pinMode(FLOWSENSOR_PIN, INPUT);
   digitalWrite(FLOWSENSOR_PIN, HIGH);
-  attachInterrupt(0,InterruptDebitAir,RISING); // di pin 2
+  attachInterrupt(0,interruptFlowSensor,RISING); // di pin 2
   sei();
 
-  // xTaskCreate(DebitTask, "DebitTask", 64, NULL, 0, NULL);
+//   xTaskCreate(DebitTask, "DebitTask", 128, NULL, 1, NULL);
   // xTaskCreate(BlinkTask, "BlinkTask", 128, NULL, 1, NULL);
 }
+
+void interruptFlowSensor()
+{
+  frekuensi_aliran++;
+}
+
+void updateDebitCount()
+{
+    DebitAir = (frekuensi_aliran/7.5)*K/60.0/WaktuDebitAir; //L/s
+
+    // Print Debit Information
+    printDebitCount();
+}
+
+void printDebitCount() {
+  Serial.print("frekuensi_aliran: ");
+  Serial.println(frekuensi_aliran);
+  Serial.print("Debit Air: ");
+  Serial.print(DebitAir);
+  Serial.println(" L/s");
+}
+
+void reportDebitCount() {
+  String topic = "waterbox/W0001/flow_sensor";
+  String message = String(DebitAir);
+  publishMqtt(topic,message);
+  resetDebitCount();
+}
+
+void publishMqtt(String topic, String message) {
+    EspSerial.println("pub:" + topic + ":" + message);
+}
+
+void resetDebitCount() {
+  Serial.println("Debit Count Reset!");
+  frekuensi_aliran = 0;
+}
+
+//void DebitTask(void *param) {
+//    (void) param;
+//    // Serial.println("debitTask: Executing on core ");
+//    
+//     for(;;) {
+//         // updateDebitCount();
+//         // Serial.print("frekuensi_aliran: ");
+//         Serial.println(frekuensi_aliran);
+//         vTaskDelay(5000 / portTICK_PERIOD_MS); // Delay between loops to reset watchdog timer portMAX_DELAY
+//     }
+//    vTaskDelete(NULL);
+//}
+//
+//void BlinkTask(void *param) {
+//    (void) param;
+//    pinMode(LED_BUILTIN, OUTPUT);
+//    for(;;) {
+//      digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+//      Serial.println("On");
+//      vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
+//      digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+//      Serial.println("Off");
+//      vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
+//  }
+//    vTaskDelete(NULL);
+//}
