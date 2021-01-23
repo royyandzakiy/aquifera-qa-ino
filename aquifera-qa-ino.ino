@@ -8,8 +8,11 @@
 #include <ds3231.h>
 #include <SD.h>
 #include <SPI.h>
-#include "credentials.h"
 //======================================================================//
+
+#ifndef CREDENTIALS_H
+  char dest_phone_no[16] = "+000000000000";
+#endif
 
 SoftwareSerial EspSerial(6, 5);
 
