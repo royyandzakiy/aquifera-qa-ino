@@ -1,3 +1,5 @@
+void HitungDebitAir();
+
 void loop() 
 {
   echo();

@@ -9,14 +9,3 @@
  * getFilename(..) = membuat file baru tiap hari yang isinya data dari perhitungan volume tiap sekian detik
  * getFilename2(..) = membuat file data tiap bulan isinya data volume akhir tiap hari
  */
-
-void InterruptDebitAir()
-{
-  frekuensi_aliran++;
-}
-
-void HitungDebitAir()
-{
-    DebitAir = (frekuensi_aliran/7.5)*K/60.0/WaktuDebitAir; //L/s
-    frekuensi_aliran = 0;
-}

@@ -8,6 +8,7 @@
 #include <ds3231.h>
 #include <SD.h>
 #include <SPI.h>
+#include <Arduino_FreeRTOS.h>
 //======================================================================//
 
 #ifndef CREDENTIALS_H
