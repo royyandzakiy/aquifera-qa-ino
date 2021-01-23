@@ -4,26 +4,9 @@ This is the Aquifera Waterbox Qaulity Assurance firmware. Used to check all func
 
 ---
 
-## How To:
-### Preparation:
-
-- Install [Arduino IDE](https://www.arduino.cc/en/main/software), or any IDE that can compile with the Arduino Framework
-- Do correct wiring (detailed description below)
-
-### Program it!:
-
-1. Create **credentials.h**, save within the same folder. Copy this code inside **credentials.h**, and change the number inside `dest_phone_no[16]`:
-```cpp
-char dest_phone_no[16] = "+YYXXXXXXXXXXX";
-
-// Change YY with country code, change XXX with phone number
-// Example:
-// char dest_phone_no[16] = "+6282121212121";
-```
-
----
-
 ### Notes:
+
+- [esp32-uart](https://github.com/royyandzakiy/esp32-uart) use in the esp32 connected to the arduino nano
 
 [Wiring/Cabling SIM800L V2](https://github.com/royyandzakiy/aquifera-waterflow-sms)
 
