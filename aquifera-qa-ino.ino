@@ -116,7 +116,7 @@ void processListenEsp(String str) {
     Serial.println("get_debit_count command engegaed");
   } else if (str=="get_debit_data") {
     // send debit data in sd card
-    Serial.println("get_debit_count command engegaed");
+    Serial.println("get_debit_data command engegaed");
   }
 }
 
