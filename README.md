@@ -1,8 +1,8 @@
-# Aquifera Waterflow
+# Aquifera Waterbox: Quality Assurance
 
-The official firmware for Aquifera Waterbox. Made to count flow of water from Aquifera watersystems.
+This is the Aquifera Waterbox Qaulity Assurance firmware. Used to check all functions if it works
 
-This project can be used to send sms messages with the SIM800L V2 module (not the SIM800L V1, nor any other type of module guaranteed to succeed).
+---
 
 ## How To:
 ### Preparation:
