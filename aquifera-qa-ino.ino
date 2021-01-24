@@ -11,34 +11,40 @@
 // #include <Arduino_FreeRTOS.h>
 #include <Time.h>
 #include <TimeAlarms.h>
+
 //======================================================================//
 
-#ifndef CREDENTIALS_H
-  char dest_phone_no[16] = "+000000000000";
-#endif
-
+// Serial
 SoftwareSerial EspSerial(6, 5);
 
 // SIM MODULE
 SoftwareSerial sim(10, 9);
+#ifndef CREDENTIALS_H
+  char dest_phone_no[16] = "+000000000000";
+#endif
 String  _buffer;
 String  number = dest_phone_no;
 
 // FLOW METER SENSOR
 #define FLOWSENSOR_PIN 2
-const long WaktuDebitAir = 5; //pengambilan data setiap 5 detik
-int K = 2.6; // Konstanta flow sensor
+const long timeDebitCount = 5; // penghitungan data tiap sekian detik
+const long timeDebitReport = 15; // pengiriman data ke MQTT Broker tiap sekian detik
+float K = 2.6; // Konstanta flow sensor
 float DebitAir = 0.0;
-int frekuensi_aliran = 0;
+volatile unsigned long frekuensi_aliran = 0;
 
-//RTC
+// RTC
 // struct ts t;
 
-//MICROSD CARD
+// SD CARD
 // File myFile;
 
-// --------
+// TIME
+// AlarmId id;
 
+//======================================================================//
+
+// Prototypes
 void setupFlowSensor();
 void resetEeprom();
 void setupRTC();
@@ -46,7 +52,7 @@ void setTimeRTC();
 void setupSDCard();
 void interruptFlowSensor();
 
-//AlarmId id;
+//======================================================================//
 
 void setup()
 {
@@ -58,24 +64,24 @@ void setup()
   // setupSDCard(); // [SALMAN] cek ini
   // ******* Setup_End *******
 
-  setTime(22,15,30,23,1,21);
-  Alarm.timerRepeat(5, updateDebitCount);
-  Alarm.timerRepeat(15, reportDebitCount);
+  setTime(22,15,30,23,1,21); // set initial time, can be fixed later
+  Alarm.timerRepeat(timeDebitCount, updateDebitCount); // turn on repeater to count debit
+  Alarm.timerRepeat(timeDebitReport, reportDebitCount); // turn on repeater to publish debit to MQTT Broker
   
   Serial.println("Setup: Initialization done.");
-  EspSerial.println("Setup: Initialization done.");
 }
 
 void loop() 
 {
   echo();
   listenEsp();
-//   digitalClockDisplay();
-   Alarm.delay(0); // wait one second between clock display
+  // digitalClockDisplay(); // display current time
+  Alarm.delay(1); // wait one second between clock display. MUST BE TURNED ON TO USE Alarm::timerRepeater
 }
 
-// ------
+//======================================================================//
 
+// ***** SERIAL ***** 
 void echo() {
   if(Serial.available()) {
     String str = Serial.readStringUntil('\n');
@@ -124,16 +130,15 @@ void sendEsp(String str) {
   EspSerial.println(str);
 }
 
-// Setup Serial
 void setupSerial() {
   Serial.begin(9600);
   EspSerial.begin(9600);
 
   while (!Serial);
   Serial.println("Setup: Initialize Serial...");
-  EspSerial.println("Setup: Initialize Serial...");
 }
 
+// ***** TIME ***** 
 //void digitalClockDisplay() {
 //  // digital clock display of the time
 //  Serial.print(hour());
@@ -149,6 +154,7 @@ void setupSerial() {
 //  Serial.print(digits);
 //}
 
+// ***** SIM ***** 
 // Setup SIM
 //void setupSim() {
 //  Serial.println("Setup: Initializing SIM...");
@@ -164,6 +170,7 @@ void setupSerial() {
 //  // ...still nothing
 //}
 
+// ***** SD CARD ***** 
 // Setup SD Card
 //void setupSDCard() {
 //  Serial.println("Setup: Initializing SD Card...");
@@ -191,7 +198,7 @@ void setupSerial() {
 //  Serial.println("Setup: SD Card Done!");
 //}
 
-// Setup RTC
+// ***** RTC ***** 
 //void setupRTC() {
 //  // initializes RTC
 //  Serial.println("Setup: Initializing RTC...");
@@ -230,7 +237,7 @@ void setupSerial() {
 //  Serial.println();  
 //}
 
-// Setup Flow Sensor
+// ***** FLOW SENSOR ***** 
 void setupFlowSensor() 
 {
   // initializes flow sensor
@@ -241,8 +248,7 @@ void setupFlowSensor()
   attachInterrupt(0,interruptFlowSensor,RISING); // di pin 2
   sei();
 
-//   xTaskCreate(DebitTask, "DebitTask", 128, NULL, 1, NULL);
-  // xTaskCreate(BlinkTask, "BlinkTask", 128, NULL, 1, NULL);
+  //setupTasks();
 }
 
 void interruptFlowSensor()
@@ -252,7 +258,7 @@ void interruptFlowSensor()
 
 void updateDebitCount()
 {
-    DebitAir = (frekuensi_aliran/7.5)*K/60.0/WaktuDebitAir; //L/s
+    DebitAir = (frekuensi_aliran/7.5)*K/60.0/timeDebitCount; //L/s
 
     // Print Debit Information
     printDebitCount();
@@ -267,14 +273,15 @@ void printDebitCount() {
 }
 
 void reportDebitCount() {
-  String topic = "waterbox/W0001/flow_sensor";
+  String topic = "flow_sensor";
   String message = String(DebitAir);
   publishMqtt(topic,message);
   resetDebitCount();
 }
 
 void publishMqtt(String topic, String message) {
-    EspSerial.println("pub:" + topic + ":" + message);
+    String topicFull = "waterbox/W0001/" + topic;
+    EspSerial.println("pub:" + topicFull + ":" + message);
 }
 
 void resetDebitCount() {
@@ -282,10 +289,13 @@ void resetDebitCount() {
   frekuensi_aliran = 0;
 }
 
-void commanadSetTime(int hr, int min, int sec, int day, int mon, int yr) {
-  setTime(hr,min,sec,day,mon,yr);
-}
+// ***** FREE RTOS ***** 
 
+//void setupTasks() {
+//   xTaskCreate(DebitTask, "DebitTask", 2048, NULL, 1, NULL);
+//   xTaskCreate(BlinkTask, "BlinkTask", 2048, NULL, 1, NULL);
+//}
+//
 //void DebitTask(void *param) {
 //    (void) param;
 //    // Serial.println("debitTask: Executing on core ");
