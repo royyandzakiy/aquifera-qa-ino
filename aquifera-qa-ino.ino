@@ -6,8 +6,8 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 // #include <ds3231.h>
-// #include <SD.h>
-// #include <SPI.h>
+#include <SD.h>
+#include <SPI.h>
 // #include <Arduino_FreeRTOS.h>
 #include <Time.h>
 #include <TimeAlarms.h>
@@ -37,7 +37,7 @@ volatile unsigned long frekuensi_aliran = 0;
 // struct ts t;
 
 // SD CARD
-// File myFile;
+File myFile;
 
 // TIME
 // AlarmId id;
@@ -60,8 +60,8 @@ void setup()
   setupSerial();
   // setupSim(); // [SALMAN] cek ini
   // setupRTC(); // abaikan aja ini
-  setupFlowSensor(); // abaikan aja ini
-  // setupSDCard(); // [SALMAN] cek ini
+  // setupFlowSensor(); // abaikan aja ini
+  setupSDCard(); // [SALMAN] cek ini
   // ******* Setup_End *******
 
   setTime(22,15,30,23,1,21); // set initial time, can be fixed later
@@ -172,31 +172,31 @@ void setupSerial() {
 
 // ***** SD CARD ***** 
 // Setup SD Card
-//void setupSDCard() {
-//  Serial.println("Setup: Initializing SD Card...");
-// 
-//  if (!SD.begin(4)) {
-//    Serial.println("Setup: Initialization SD Card failed!");
-//    while (1);
-//  } else {
-//    Serial.println("Setup: Initialization SD Card successs!");
-//    // try create, write, delete file
-//    // testSDCard();
-//  }
-//}
+void setupSDCard() {
+  Serial.println("Setup: Initializing SD Card...");
+ 
+  if (!SD.begin(3)) {
+    Serial.println("Setup: Initialization SD Card failed!");
+    while (1);
+  } else {
+    Serial.println("Setup: Initialization SD Card successs!");
+    // try create, write, delete file
+    // testSDCard();
+  }
+}
 
-//void testSDCard() {
-//  // perform create, write, delete file [still WIP]
-//  myFile = SD.open("data.txt", FILE_WRITE);
-//  int data = 0;
-//  for (int i=0; i<3; i++)
-//    myFile.write(data++);
-//  
-//  char line[100];
-//  int n=0;
-//  
-//  Serial.println("Setup: SD Card Done!");
-//}
+void testSDCard() {
+  // perform create, write, delete file [still WIP]
+  myFile = SD.open("data.txt", FILE_WRITE);
+  int data = 0;
+  for (int i=0; i<3; i++)
+    myFile.write(data++);
+  
+  char line[100];
+  int n=0;
+  
+  Serial.println("Setup: SD Card Done!");
+}
 
 // ***** RTC ***** 
 //void setupRTC() {
